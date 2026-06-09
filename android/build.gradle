@@ -5,10 +5,9 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.9.1'
+        classpath 'com.android.tools.build:gradle:8.13.0'  // ✅ غيرنا من 8.9.1 إلى 8.13.0
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath 'com.google.gms:google-services:4.4.2'
-        // ⭐ أضف هذا السطر - هذا هو المطلوب لحل المشكلة
         classpath 'com.google.firebase:firebase-crashlytics-gradle:3.0.3'
     }
 }
