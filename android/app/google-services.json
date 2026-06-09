@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "392831856847",
+    "project_id": "privoo-b1c4b",
+    "storage_bucket": "privoo-b1c4b.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:392831856847:android:672e8fe9b9f9bf1e6847ba",
+        "android_client_info": {
+          "package_name": "com.mando.privoo"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBidB6VjsczHD-bP_SOiJt-9x5nWips7EA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
