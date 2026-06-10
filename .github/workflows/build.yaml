@@ -7,10 +7,15 @@ on:
 
 jobs:
   build:
-    runs-on: macos-latest  # ✅ macos بدلاً من ubuntu
-    
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
       
       - uses: subosito/flutter-action@v2
         with:
