@@ -34,12 +34,12 @@ workflows:
             echo "⚠️ key.properties not found"
             if [ -n "$CM_KEYSTORE" ] && [ -n "$CM_KEYSTORE_PASSWORD" ]; then
               echo "$CM_KEYSTORE" | base64 --decode > android/privoo-key.jks
-              cat > android/key.properties << EOF
-storePassword=$CM_KEYSTORE_PASSWORD
-keyPassword=$CM_KEY_PASSWORD
-keyAlias=$CM_KEY_ALIAS
-storeFile=privoo-key.jks
-EOF
+              cat > android/key.properties << "EOF"
+          storePassword=$CM_KEYSTORE_PASSWORD
+          keyPassword=$CM_KEY_PASSWORD
+          keyAlias=$CM_KEY_ALIAS
+          storeFile=privoo-key.jks
+          EOF
               echo "✅ key.properties created from secrets"
             fi
           fi
