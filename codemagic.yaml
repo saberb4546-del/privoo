@@ -9,71 +9,27 @@ workflows:
     scripts:
       - name: 🔍 Scan for sensitive files
         script: |
-          echo "========================================="
           echo "🔍 Scanning for sensitive files..."
-          echo "========================================="
-          
-          SENSITIVE_FILES="*.jks *.keystore key.properties .env .env.* google-services.json firebase_options.dart"
-          
-          for pattern in $SENSITIVE_FILES; do
-            find . -name "$pattern" -type f 2>/dev/null | grep -v ".git" | grep -v "build" | while read file; do
-              echo "✅ Found: $file"
-            done
+          find . -name "*.jks" -o -name "key.properties" -o -name ".env" 2>/dev/null | grep -v ".git" | while read file; do
+            echo "✅ Found: $file"
           done
 
       - name: 🔐 Setup signing keystore
         script: |
-          echo "========================================="
-          echo "🔐 Setting up signing keystore..."
-          echo "========================================="
-          
           if [ -f "android/key.properties" ]; then
             echo "✅ key.properties found"
             cat android/key.properties
-          else
-            echo "⚠️ key.properties not found"
-            if [ -n "$CM_KEYSTORE" ] && [ -n "$CM_KEYSTORE_PASSWORD" ]; then
-              echo "$CM_KEYSTORE" | base64 --decode > android/privoo-key.jks
-              cat > android/key.properties << "EOF"
-          storePassword=$CM_KEYSTORE_PASSWORD
-          keyPassword=$CM_KEY_PASSWORD
-          keyAlias=$CM_KEY_ALIAS
-          storeFile=privoo-key.jks
-          EOF
-              echo "✅ key.properties created from secrets"
-            fi
           fi
-          
           if [ -f "android/privoo-key.jks" ]; then
             echo "✅ Keystore found"
-            ls -la android/privoo-key.jks
-          else
-            echo "⚠️ No keystore found"
           fi
 
-      - name: 🔍 Verify Firebase config
+      - name: Clean and build Debug
         script: |
-          echo "========================================="
-          echo "🔥 Checking Firebase configuration..."
-          echo "========================================="
-          
-          if [ -f "android/app/google-services.json" ]; then
-            echo "✅ google-services.json found"
-          else
-            echo "⚠️ google-services.json not found"
-          fi
-
-      - name: Clean and build
-        script: |
-          echo "========================================="
-          echo "🚀 Starting Flutter build..."
-          echo "========================================="
-          
           flutter clean
           flutter pub get
-          flutter build apk --release
+          flutter build apk --debug
           
-          echo ""
           echo "📁 Build outputs:"
           ls -la build/app/outputs/flutter-apk/
 
