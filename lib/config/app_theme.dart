@@ -792,8 +792,8 @@ class AppTheme {
         backgroundColor: privooDarkBg,
         shape: const RoundedRectangleBorder(
           borderRadius: const BorderRadius.only(
-            begin: Radius.circular(24),
-            end: Radius.zero,
+            topLeft: Radius.circular(24),
+            bottomLeft: Radius.zero,
           ),
         ),
       ),
