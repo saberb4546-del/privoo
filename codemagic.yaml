@@ -13,43 +13,13 @@ workflows:
           echo "🔍 Scanning for sensitive files..."
           echo "========================================="
           
-          # تعريف الملفات الحساسة
-          SENSITIVE_FILES=(
-            "*.jks"
-            "*.keystore"
-            "key.properties"
-            ".env"
-            ".env.*"
-            "google-services.json"
-            "firebase_options.dart"
-          )
+          SENSITIVE_FILES="*.jks *.keystore key.properties .env .env.* google-services.json firebase_options.dart"
           
-          FOUND_SENSITIVE=()
-          
-          # البحث عن الملفات الحساسة
-          for pattern in "${SENSITIVE_FILES[@]}"; do
-            while IFS= read -r file; do
-              if [ -f "$file" ]; then
-                echo "✅ Found: $file"
-                FOUND_SENSITIVE+=("$file")
-              fi
-            done < <(find . -name "$pattern" -type f 2>/dev/null | grep -v ".git" | grep -v "build")
+          for pattern in $SENSITIVE_FILES; do
+            find . -name "$pattern" -type f 2>/dev/null | grep -v ".git" | grep -v "build" | while read file; do
+              echo "✅ Found: $file"
+            done
           done
-          
-          # عرض النتائج
-          if [ ${#FOUND_SENSITIVE[@]} -gt 0 ]; then
-            echo ""
-            echo "📁 Sensitive files found:"
-            echo "========================================="
-            printf '   • %s\n' "${FOUND_SENSITIVE[@]}"
-            echo "========================================="
-          else
-            echo "⚠️  No sensitive files found in repository"
-            echo "💡 Make sure you have:"
-            echo "   - privoo-key.jks"
-            echo "   - key.properties"
-            echo "   - google-services.json"
-          fi
 
       - name: 🔐 Setup signing keystore
         script: |
@@ -57,36 +27,28 @@ workflows:
           echo "🔐 Setting up signing keystore..."
           echo "========================================="
           
-          # التحقق من وجود key.properties
           if [ -f "android/key.properties" ]; then
-            echo "✅ key.properties found in repository"
+            echo "✅ key.properties found"
             cat android/key.properties
           else
-            echo "⚠️  key.properties not found in repository"
-            
-            # محاولة استخدام Secrets إذا كانت موجودة
+            echo "⚠️ key.properties not found"
             if [ -n "$CM_KEYSTORE" ] && [ -n "$CM_KEYSTORE_PASSWORD" ]; then
-              echo "📦 Using keystore from CodeMagic Secrets"
               echo "$CM_KEYSTORE" | base64 --decode > android/privoo-key.jks
-              
               cat > android/key.properties << EOF
-              storePassword=$CM_KEYSTORE_PASSWORD
-              keyPassword=$CM_KEY_PASSWORD
-              keyAlias=$CM_KEY_ALIAS
-              storeFile=privoo-key.jks
-              EOF
+storePassword=$CM_KEYSTORE_PASSWORD
+keyPassword=$CM_KEY_PASSWORD
+keyAlias=$CM_KEY_ALIAS
+storeFile=privoo-key.jks
+EOF
               echo "✅ key.properties created from secrets"
-            else
-              echo "⚠️  No signing credentials found, will use debug signing"
             fi
           fi
           
-          # التحقق من وجود الـ keystore
           if [ -f "android/privoo-key.jks" ]; then
-            echo "✅ Keystore found: android/privoo-key.jks"
+            echo "✅ Keystore found"
             ls -la android/privoo-key.jks
           else
-            echo "⚠️  No keystore found, APK will be signed with debug key"
+            echo "⚠️ No keystore found"
           fi
 
       - name: 🔍 Verify Firebase config
@@ -98,13 +60,7 @@ workflows:
           if [ -f "android/app/google-services.json" ]; then
             echo "✅ google-services.json found"
           else
-            echo "⚠️  google-services.json not found in android/app/"
-          fi
-          
-          if [ -f "ios/Runner/GoogleService-Info.plist" ]; then
-            echo "✅ GoogleService-Info.plist found"
-          else
-            echo "⚠️  GoogleService-Info.plist not found in ios/Runner/"
+            echo "⚠️ google-services.json not found"
           fi
 
       - name: Clean and build
@@ -115,14 +71,10 @@ workflows:
           
           flutter clean
           flutter pub get
-          
-          # بناء APK
           flutter build apk --release
           
           echo ""
-          echo "========================================="
           echo "📁 Build outputs:"
-          echo "========================================="
           ls -la build/app/outputs/flutter-apk/
 
     artifacts:
