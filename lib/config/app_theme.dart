@@ -54,7 +54,7 @@ class AppTheme {
   // ✅ تدرج الخلفية الرئيسية
   static const LinearGradient backgroundGradient = LinearGradient(
     begin: Alignment.topLeft,
-    bottomLeft: Alignment.bottomRight,
+    end: Alignment.bottomRight,
     colors: [privooDarkerBg, privooDarkBg, privooDarkerBg],
   );
   
@@ -62,28 +62,28 @@ class AppTheme {
   static const LinearGradient appBarGradient = LinearGradient(
     colors: [privooLightPurple, privooDeepPurple],
     begin: Alignment.topLeft,
-    bottomLeft: Alignment.bottomRight,
+    end: Alignment.bottomRight,
   );
 
   // ✅ تدرج الأزرار الرئيسية
   static const LinearGradient buttonGradient = LinearGradient(
     colors: [privooLightPurple, privooDeepPurple, privooLightPurple],
     begin: Alignment.centerLeft,
-    bottomLeft: Alignment.centerRight,
+    end: Alignment.centerRight,
   );
 
   // ✅ تدرج الأزرار الذهبية (Pro/Upgrade)
   static const LinearGradient goldButtonGradient = LinearGradient(
     colors: [privooGold, Color(0xFFFFA500), privooGold],
     begin: Alignment.centerLeft,
-    bottomLeft: Alignment.centerRight,
+    end: Alignment.centerRight,
   );
 
   // ✅ تدرج أزرار FAB
   static const LinearGradient fabGradient = LinearGradient(
     colors: [privooLightPurple, privooGold],
     begin: Alignment.topLeft,
-    bottomLeft: Alignment.bottomRight,
+    end: Alignment.bottomRight,
   );
 
   // ✅ تدرج الكروت
@@ -93,7 +93,7 @@ class AppTheme {
       privooCardDark.withValues(alpha: 0.98),
     ],
     begin: Alignment.topLeft,
-    bottomLeft: Alignment.bottomRight,
+    end: Alignment.bottomRight,
   );
   
   // ✅ تدرج الخلفية الرئيسية (احتياطي)
@@ -103,7 +103,7 @@ class AppTheme {
   static const LinearGradient goldGradient = LinearGradient(
     colors: [privooGold, Color(0xFFFFA500)],
     begin: Alignment.topLeft,
-    bottomLeft: Alignment.bottomRight,
+    end: Alignment.bottomRight,
   );
 
   // ============================================================
@@ -792,8 +792,8 @@ class AppTheme {
         backgroundColor: privooDarkBg,
         shape: const RoundedRectangleBorder(
           borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(24),
-            bottomLeft: Radius.zero,
+            begin: Radius.circular(24),
+            end: Radius.zero,
           ),
         ),
       ),
