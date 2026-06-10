@@ -1,0 +1,23 @@
+workflows:
+  flutter-workflow:
+    name: Flutter Build
+    instance_type: mac_mini_m2
+    environment:
+      flutter: 3.29.0
+    scripts:
+      - name: Build APK
+        script: |
+          flutter clean
+          flutter pub get
+          flutter build apk --release
+          
+          echo "========================================="
+          echo "🔍 Searching for APK files..."
+          echo "========================================="
+          find . -name "*.apk" -type f 2>/dev/null
+          
+          mkdir -p build/app/outputs/flutter-apk/
+          find . -name "*.apk" -exec cp {} build/app/outputs/flutter-apk/ \;
+          
+    artifacts:
+      - build/app/outputs/flutter-apk/*.apk
