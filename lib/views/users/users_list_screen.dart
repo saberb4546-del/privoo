@@ -59,7 +59,8 @@ class _UsersListScreenState extends State<UsersListScreen> with SingleTickerProv
         final userPhone = data['phoneNumber'] ?? data['phone'] ?? '';
         final userUid = data['uid'] ?? doc.id;
         
-        if (userPhone != _currentUserPhone) {
+        // ✅ استخدام UID للمقارنة بدلاً من رقم الهاتف
+        if (doc.id != _currentUserId) {
           users.add({
             'id': doc.id,
             'uid': userUid,
@@ -467,7 +468,6 @@ class _UsersListScreenState extends State<UsersListScreen> with SingleTickerProv
             child: TabBarView(
               controller: _tabController,
               children: [
-                // تبويب المستخدمين
                 _isLoading
                     ? const Center(child: CircularProgressIndicator())
                     : _filteredUsers.isEmpty
@@ -475,21 +475,11 @@ class _UsersListScreenState extends State<UsersListScreen> with SingleTickerProv
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(
-                                  Icons.people_outline,
-                                  size: 80,
-                                  color: AppTheme.privooDeepPurple.withValues(alpha: 0.3),
-                                ),
+                                Icon(Icons.people_outline, size: 80, color: AppTheme.privooDeepPurple.withValues(alpha: 0.3)),
                                 const SizedBox(height: 16),
-                                const Text(
-                                  'لا يوجد مستخدمون',
-                                  style: TextStyle(fontSize: 18),
-                                ),
+                                const Text('لا يوجد مستخدمون', style: TextStyle(fontSize: 18)),
                                 const SizedBox(height: 8),
-                                Text(
-                                  'شارك التطبيق مع أصدقائك',
-                                  style: TextStyle(color: Colors.grey.shade600),
-                                ),
+                                Text('شارك التطبيق مع أصدقائك', style: TextStyle(color: Colors.grey.shade600)),
                               ],
                             ),
                           )
@@ -497,8 +487,6 @@ class _UsersListScreenState extends State<UsersListScreen> with SingleTickerProv
                             itemCount: _filteredUsers.length,
                             itemBuilder: (context, index) => _buildUserCard(_filteredUsers[index]),
                           ),
-                
-                // تبويب جهات الاتصال
                 _isContactsLoading
                     ? const Center(child: CircularProgressIndicator())
                     : !_hasPhonePermission
@@ -506,26 +494,11 @@ class _UsersListScreenState extends State<UsersListScreen> with SingleTickerProv
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(
-                                  Icons.contacts_outlined,
-                                  size: 80,
-                                  color: AppTheme.privooDeepPurple.withValues(alpha: 0.3),
-                                ),
+                                Icon(Icons.contacts_outlined, size: 80, color: AppTheme.privooDeepPurple.withValues(alpha: 0.3)),
                                 const SizedBox(height: 16),
-                                const Text(
-                                  'يحتاج التطبيق إلى إذن قراءة جهات الاتصال',
-                                  style: TextStyle(fontSize: 16),
-                                ),
+                                const Text('يحتاج التطبيق إلى إذن قراءة جهات الاتصال', style: TextStyle(fontSize: 16)),
                                 const SizedBox(height: 16),
-                                ElevatedButton(
-                                  onPressed: _loadContacts,
-                                  style: ElevatedButton.styleFrom(
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(30),
-                                    ),
-                                  ),
-                                  child: const Text('منح الإذن'),
-                                ),
+                                ElevatedButton(onPressed: _loadContacts, child: const Text('منح الإذن')),
                               ],
                             ),
                           )
@@ -534,21 +507,11 @@ class _UsersListScreenState extends State<UsersListScreen> with SingleTickerProv
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Icon(
-                                      Icons.contact_phone_outlined,
-                                      size: 80,
-                                      color: AppTheme.privooDeepPurple.withValues(alpha: 0.3),
-                                    ),
+                                    Icon(Icons.contact_phone_outlined, size: 80, color: AppTheme.privooDeepPurple.withValues(alpha: 0.3)),
                                     const SizedBox(height: 16),
-                                    const Text(
-                                      'لا توجد جهات اتصال',
-                                      style: TextStyle(fontSize: 18),
-                                    ),
+                                    const Text('لا توجد جهات اتصال', style: TextStyle(fontSize: 18)),
                                     const SizedBox(height: 8),
-                                    Text(
-                                      'أضف جهات اتصال إلى هاتفك',
-                                      style: TextStyle(color: Colors.grey.shade600),
-                                    ),
+                                    Text('أضف جهات اتصال إلى هاتفك', style: TextStyle(color: Colors.grey.shade600)),
                                   ],
                                 ),
                               )
