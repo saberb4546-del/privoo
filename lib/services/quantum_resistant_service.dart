@@ -91,13 +91,17 @@ class QuantumResistantService {
     List<int> privateKey,
   ) async {
     try {
+      final x25519 = X25519();
+      final ephemeralPub = SimplePublicKey(ciphertext, type: KeyPairType.x25519);
+      
+      // ✅ إصلاح: إنشاء SimpleKeyPairData بالشكل الصحيح
       final myPrivateKey = SimpleKeyPairData(
         privateKey,
         type: KeyPairType.x25519,
+        publicKey: await _derivePublicKeyFromPrivate(privateKey),
       );
-      final ephemeralPub = SimplePublicKey(ciphertext, type: KeyPairType.x25519);
       
-      final sharedSecret = await X25519().sharedSecretKey(
+      final sharedSecret = await x25519.sharedSecretKey(
         keyPair: myPrivateKey,
         remotePublicKey: ephemeralPub,
       );
@@ -107,6 +111,16 @@ class QuantumResistantService {
       logger.e('❌ فك التشفير الكمومي: $e');
       rethrow;
     }
+  }
+  
+  // ✅ دالة مساعدة لاستخراج المفتاح العام من الخاص
+  static Future<SimplePublicKey> _derivePublicKeyFromPrivate(List<int> privateKey) async {
+    final x25519 = X25519();
+    final keyPair = SimpleKeyPairData(
+      privateKey,
+      type: KeyPairType.x25519,
+    );
+    return await keyPair.extractPublicKey();
   }
   
   static Future<({
@@ -149,9 +163,13 @@ class QuantumResistantService {
       }
       
       final ed25519 = Ed25519();
+      
+      // ✅ إصلاح: إنشاء SimpleKeyPairData بالشكل الصحيح
+      final publicKeyBytes = await _getDilithiumPublicKey(userId);
       final keyPair = SimpleKeyPairData(
         base64Decode(secretKeyB64),
         type: KeyPairType.ed25519,
+        publicKey: SimplePublicKey(publicKeyBytes, type: KeyPairType.ed25519),
       );
       
       final signature = await ed25519.sign(utf8.encode(message), keyPair: keyPair);
@@ -162,20 +180,25 @@ class QuantumResistantService {
     }
   }
   
+  static Future<List<int>> _getDilithiumPublicKey(String userId) async {
+    final doc = await _firestore.collection('quantum_keys').doc(userId).get();
+    final publicKeyB64 = doc.data()?['dilithiumPublicKey'] as String?;
+    if (publicKeyB64 == null) {
+      throw Exception('No public key found for user $userId');
+    }
+    return base64Decode(publicKeyB64);
+  }
+  
   static Future<bool> verifyDilithiumSignature(
     String message,
     String signatureBase64,
     String userId,
   ) async {
     try {
-      final doc = await _firestore.collection('quantum_keys').doc(userId).get();
-      final publicKeyB64 = doc.data()?['dilithiumPublicKey'] as String?;
-      if (publicKeyB64 == null) {
-        return false;
-      }
+      final publicKeyBytes = await _getDilithiumPublicKey(userId);
       
       final ed25519 = Ed25519();
-      final publicKey = SimplePublicKey(base64Decode(publicKeyB64), type: KeyPairType.ed25519);
+      final publicKey = SimplePublicKey(publicKeyBytes, type: KeyPairType.ed25519);
       final signature = Signature(base64Decode(signatureBase64), publicKey: publicKey);
       
       return await ed25519.verify(utf8.encode(message), signature: signature);
