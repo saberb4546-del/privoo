@@ -1,11 +1,33 @@
 workflows:
-  flutter-workflow:
-    name: Flutter Build
+  # 1️⃣ Web Build (للنشر على Firebase Hosting)
+  web-workflow:
+    name: Web Build
     instance_type: mac_mini_m2
     environment:
       flutter: 3.29.0
     scripts:
-      - name: Build APK
+      - name: Build Web
+        script: |
+          flutter clean
+          flutter pub get
+          flutter build web --release
+          
+          echo "========================================="
+          echo "🔍 Web build completed"
+          echo "========================================="
+          
+          mkdir -p build/web
+    artifacts:
+      - build/web/**
+
+  # 2️⃣ Release APK (للنشر على المتاجر)
+  release-workflow:
+    name: Release APK
+    instance_type: mac_mini_m2
+    environment:
+      flutter: 3.29.0
+    scripts:
+      - name: Build Release APK
         script: |
           flutter clean
           flutter pub get
@@ -18,6 +40,69 @@ workflows:
           
           mkdir -p build/app/outputs/flutter-apk/
           find . -name "*.apk" -exec cp {} build/app/outputs/flutter-apk/ \;
-          
     artifacts:
       - build/app/outputs/flutter-apk/*.apk
+
+  # 3️⃣ Debug APK (للتجربة والاختبار)
+  debug-workflow:
+    name: Debug APK
+    instance_type: mac_mini_m2
+    environment:
+      flutter: 3.29.0
+    scripts:
+      - name: Build Debug APK
+        script: |
+          flutter clean
+          flutter pub get
+          flutter build apk --debug
+          
+          echo "========================================="
+          echo "🔍 Searching for Debug APK files..."
+          echo "========================================="
+          find . -name "*.apk" -type f 2>/dev/null
+          
+          mkdir -p build/app/outputs/flutter-apk/
+          find . -name "*.apk" -exec cp {} build/app/outputs/flutter-apk/ \;
+    artifacts:
+      - build/app/outputs/flutter-apk/*.apk
+
+  # 4️⃣ All builds (APK + Web) في مرة واحدة
+  all-workflow:
+    name: All Builds (APK + Web)
+    instance_type: mac_mini_m2
+    environment:
+      flutter: 3.29.0
+    scripts:
+      - name: Build Release APK
+        script: |
+          flutter clean
+          flutter pub get
+          flutter build apk --release
+          
+      - name: Build Debug APK
+        script: |
+          flutter build apk --debug
+          
+      - name: Build Web
+        script: |
+          flutter build web --release
+          
+      - name: Collect all artifacts
+        script: |
+          echo "========================================="
+          echo "📦 Collecting all artifacts..."
+          echo "========================================="
+          
+          mkdir -p build/outputs
+          
+          # نسخ APK files
+          find . -name "*.apk" -exec cp {} build/outputs/ \;
+          
+          # نسخ Web files
+          cp -r build/web build/outputs/web
+          
+          echo "✅ All builds completed"
+          
+    artifacts:
+      - build/outputs/*.apk
+      - build/outputs/web/**
