@@ -94,11 +94,17 @@ class QuantumResistantService {
       final x25519 = X25519();
       final ephemeralPub = SimplePublicKey(ciphertext, type: KeyPairType.x25519);
       
-      // ✅ إصلاح: إنشاء SimpleKeyPairData بالشكل الصحيح
+      // ✅ إصلاح: إنشاء SimpleKeyPairData مع publicKey
+      final tempPair = SimpleKeyPairData(
+        privateKey,
+        type: KeyPairType.x25519,
+      );
+      final publicKey = await tempPair.extractPublicKey();
+      
       final myPrivateKey = SimpleKeyPairData(
         privateKey,
         type: KeyPairType.x25519,
-        publicKey: await _derivePublicKeyFromPrivate(privateKey),
+        publicKey: publicKey,
       );
       
       final sharedSecret = await x25519.sharedSecretKey(
@@ -111,16 +117,6 @@ class QuantumResistantService {
       logger.e('❌ فك التشفير الكمومي: $e');
       rethrow;
     }
-  }
-  
-  // ✅ دالة مساعدة لاستخراج المفتاح العام من الخاص
-  static Future<SimplePublicKey> _derivePublicKeyFromPrivate(List<int> privateKey) async {
-    final x25519 = X25519();
-    final keyPair = SimpleKeyPairData(
-      privateKey,
-      type: KeyPairType.x25519,
-    );
-    return await keyPair.extractPublicKey();
   }
   
   static Future<({
@@ -162,10 +158,11 @@ class QuantumResistantService {
         throw Exception('No Dilithium key found for user $userId');
       }
       
+      final publicKeyBytes = await _getDilithiumPublicKey(userId);
+      
       final ed25519 = Ed25519();
       
-      // ✅ إصلاح: إنشاء SimpleKeyPairData بالشكل الصحيح
-      final publicKeyBytes = await _getDilithiumPublicKey(userId);
+      // ✅ إصلاح: إنشاء SimpleKeyPairData مع publicKey
       final keyPair = SimpleKeyPairData(
         base64Decode(secretKeyB64),
         type: KeyPairType.ed25519,
