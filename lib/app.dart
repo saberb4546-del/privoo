@@ -104,14 +104,19 @@ class _PrivooAppState extends ConsumerState<PrivooApp> {
             .doc(user.uid)
             .get(const GetOptions(source: Source.server));
 
-        if (userDoc.exists && userDoc.data()?['name'] != null && userDoc.data()?['name'].toString().trim().isNotEmpty) {
-          // الحساب مكتمل وله اسم في قاعدة البيانات
-          _nextRoute = '/home';
-          _logger.i("✅ البروفايل موجود ومكتمل - التوجيه إلى HomeScreen");
+        if (userDoc.exists) {
+          final data = userDoc.data();
+          final name = data?['name'] as String?;
+          if (name != null && name.trim().isNotEmpty) {
+            _nextRoute = '/home';
+            _logger.i("✅ البروفايل موجود ومكتمل - التوجيه إلى HomeScreen");
+          } else {
+            _nextRoute = '/profile';
+            _logger.w("⚠️ لا يوجد اسم في السيرفر - التوجيه إلى ProfileSetupScreen");
+          }
         } else {
-          // الحساب مسجل رقم لكن مسحت المستند بتاعه أو لسه مكتبش اسمه
           _nextRoute = '/profile';
-          _logger.w("⚠️ لا يوجد اسم أو بروفايل في السيرفر - التوجيه إلى ProfileSetupScreen لإعداد الحساب");
+          _logger.w("⚠️ لا يوجد مستند في السيرفر - التوجيه إلى ProfileSetupScreen");
         }
       } else {
         _nextRoute = '/login';
