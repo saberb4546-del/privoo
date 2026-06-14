@@ -18,17 +18,260 @@ class OTPLoginScreen extends StatefulWidget {
 class _OTPLoginScreenState extends State<OTPLoginScreen> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
   final TextEditingController _otpController = TextEditingController();
 
   String? _verificationId;
   bool _codeSent = false;
   bool _isLoading = false;
   int _attempts = 0;
-  int _loginMethod = 0; // 0 = Phone, 1 = Email
+
+  // ✅ متغير رمز الدولة
+  String _selectedCountryCode = '+20';
+  String _selectedCountryFlag = '🇪🇬';
+  String _selectedCountryName = 'مصر';
 
   Timer? _cooldownTimer;
   int _cooldownSeconds = 0;
+
+  // ✅ قائمة جميع دول العالم (250+ دولة)
+  final List<Map<String, String>> _allCountries = [
+    // 🌍 أفريقيا
+    {'code': '+20', 'flag': '🇪🇬', 'name': 'مصر'},
+    {'code': '+213', 'flag': '🇩🇿', 'name': 'الجزائر'},
+    {'code': '+212', 'flag': '🇲🇦', 'name': 'المغرب'},
+    {'code': '+216', 'flag': '🇹🇳', 'name': 'تونس'},
+    {'code': '+218', 'flag': '🇱🇾', 'name': 'ليبيا'},
+    {'code': '+249', 'flag': '🇸🇩', 'name': 'السودان'},
+    {'code': '+222', 'flag': '🇲🇷', 'name': 'موريتانيا'},
+    {'code': '+223', 'flag': '🇲🇱', 'name': 'مالي'},
+    {'code': '+227', 'flag': '🇳🇪', 'name': 'النيجر'},
+    {'code': '+235', 'flag': '🇹🇩', 'name': 'تشاد'},
+    {'code': '+221', 'flag': '🇸🇳', 'name': 'السنغال'},
+    {'code': '+224', 'flag': '🇬🇳', 'name': 'غينيا'},
+    {'code': '+225', 'flag': '🇨🇮', 'name': 'ساحل العاج'},
+    {'code': '+226', 'flag': '🇧🇫', 'name': 'بوركينا فاسو'},
+    {'code': '+229', 'flag': '🇧🇯', 'name': 'بنين'},
+    {'code': '+228', 'flag': '🇹🇬', 'name': 'توغو'},
+    {'code': '+233', 'flag': '🇬🇭', 'name': 'غانا'},
+    {'code': '+234', 'flag': '🇳🇬', 'name': 'نيجيريا'},
+    {'code': '+237', 'flag': '🇨🇲', 'name': 'الكاميرون'},
+    {'code': '+242', 'flag': '🇨🇬', 'name': 'الكونغو'},
+    {'code': '+243', 'flag': '🇨🇩', 'name': 'الكونغو الديمقراطية'},
+    {'code': '+244', 'flag': '🇦🇴', 'name': 'أنغولا'},
+    {'code': '+245', 'flag': '🇬🇼', 'name': 'غينيا بيساو'},
+    {'code': '+246', 'flag': '🇮🇴', 'name': 'إقليم المحيط الهندي البريطاني'},
+    {'code': '+248', 'flag': '🇸🇨', 'name': 'سيشل'},
+    {'code': '+250', 'flag': '🇷🇼', 'name': 'رواندا'},
+    {'code': '+251', 'flag': '🇪🇹', 'name': 'إثيوبيا'},
+    {'code': '+252', 'flag': '🇸🇴', 'name': 'الصومال'},
+    {'code': '+253', 'flag': '🇩🇯', 'name': 'جيبوتي'},
+    {'code': '+254', 'flag': '🇰🇪', 'name': 'كينيا'},
+    {'code': '+255', 'flag': '🇹🇿', 'name': 'تنزانيا'},
+    {'code': '+256', 'flag': '🇺🇬', 'name': 'أوغندا'},
+    {'code': '+257', 'flag': '🇧🇮', 'name': 'بوروندي'},
+    {'code': '+258', 'flag': '🇲🇿', 'name': 'موزمبيق'},
+    {'code': '+260', 'flag': '🇿🇲', 'name': 'زامبيا'},
+    {'code': '+261', 'flag': '🇲🇬', 'name': 'مدغشقر'},
+    {'code': '+262', 'flag': '🇷🇪', 'name': 'لا ريونيون'},
+    {'code': '+263', 'flag': '🇿🇼', 'name': 'زيمبابوي'},
+    {'code': '+264', 'flag': '🇳🇦', 'name': 'ناميبيا'},
+    {'code': '+265', 'flag': '🇲🇼', 'name': 'مالاوي'},
+    {'code': '+266', 'flag': '🇱🇸', 'name': 'ليسوتو'},
+    {'code': '+267', 'flag': '🇧🇼', 'name': 'بوتسوانا'},
+    {'code': '+268', 'flag': '🇸🇿', 'name': 'إسواتيني'},
+    {'code': '+269', 'flag': '🇰🇲', 'name': 'جزر القمر'},
+    {'code': '+27', 'flag': '🇿🇦', 'name': 'جنوب أفريقيا'},
+    {'code': '+290', 'flag': '🇸🇭', 'name': 'سانت هيلينا'},
+    {'code': '+291', 'flag': '🇪🇷', 'name': 'إريتريا'},
+    {'code': '+297', 'flag': '🇦🇼', 'name': 'أروبا'},
+    {'code': '+298', 'flag': '🇫🇴', 'name': 'جزر فارو'},
+    {'code': '+299', 'flag': '🇬🇱', 'name': 'غرينلاند'},
+    
+    // 🌍 آسيا
+    {'code': '+93', 'flag': '🇦🇫', 'name': 'أفغانستان'},
+    {'code': '+94', 'flag': '🇱🇰', 'name': 'سريلانكا'},
+    {'code': '+95', 'flag': '🇲🇲', 'name': 'ميانمار'},
+    {'code': '+960', 'flag': '🇲🇻', 'name': 'جزر المالديف'},
+    {'code': '+961', 'flag': '🇱🇧', 'name': 'لبنان'},
+    {'code': '+962', 'flag': '🇯🇴', 'name': 'الأردن'},
+    {'code': '+963', 'flag': '🇸🇾', 'name': 'سوريا'},
+    {'code': '+964', 'flag': '🇮🇶', 'name': 'العراق'},
+    {'code': '+965', 'flag': '🇰🇼', 'name': 'الكويت'},
+    {'code': '+966', 'flag': '🇸🇦', 'name': 'السعودية'},
+    {'code': '+967', 'flag': '🇾🇪', 'name': 'اليمن'},
+    {'code': '+968', 'flag': '🇴🇲', 'name': 'عمان'},
+    {'code': '+970', 'flag': '🇵🇸', 'name': 'فلسطين'},
+    {'code': '+971', 'flag': '🇦🇪', 'name': 'الإمارات'},
+    {'code': '+972', 'flag': '🇮🇱', 'name': 'إسرائيل'},
+    {'code': '+973', 'flag': '🇧🇭', 'name': 'البحرين'},
+    {'code': '+974', 'flag': '🇶🇦', 'name': 'قطر'},
+    {'code': '+975', 'flag': '🇧🇹', 'name': 'بوتان'},
+    {'code': '+976', 'flag': '🇲🇳', 'name': 'منغوليا'},
+    {'code': '+977', 'flag': '🇳🇵', 'name': 'نيبال'},
+    {'code': '+98', 'flag': '🇮🇷', 'name': 'إيران'},
+    {'code': '+992', 'flag': '🇹🇯', 'name': 'طاجيكستان'},
+    {'code': '+993', 'flag': '🇹🇲', 'name': 'تركمانستان'},
+    {'code': '+994', 'flag': '🇦🇿', 'name': 'أذربيجان'},
+    {'code': '+995', 'flag': '🇬🇪', 'name': 'جورجيا'},
+    {'code': '+996', 'flag': '🇰🇬', 'name': 'قيرغيزستان'},
+    {'code': '+998', 'flag': '🇺🇿', 'name': 'أوزبكستان'},
+    {'code': '+850', 'flag': '🇰🇵', 'name': 'كوريا الشمالية'},
+    {'code': '+852', 'flag': '🇭🇰', 'name': 'هونغ كونغ'},
+    {'code': '+853', 'flag': '🇲🇴', 'name': 'ماكاو'},
+    {'code': '+855', 'flag': '🇰🇭', 'name': 'كمبوديا'},
+    {'code': '+856', 'flag': '🇱🇦', 'name': 'لاوس'},
+    {'code': '+86', 'flag': '🇨🇳', 'name': 'الصين'},
+    {'code': '+880', 'flag': '🇧🇩', 'name': 'بنغلاديش'},
+    {'code': '+886', 'flag': '🇹🇼', 'name': 'تايوان'},
+    {'code': '+90', 'flag': '🇹🇷', 'name': 'تركيا'},
+    {'code': '+91', 'flag': '🇮🇳', 'name': 'الهند'},
+    {'code': '+92', 'flag': '🇵🇰', 'name': 'باكستان'},
+    {'code': '+60', 'flag': '🇲🇾', 'name': 'ماليزيا'},
+    {'code': '+61', 'flag': '🇦🇺', 'name': 'أستراليا'},
+    {'code': '+62', 'flag': '🇮🇩', 'name': 'إندونيسيا'},
+    {'code': '+63', 'flag': '🇵🇭', 'name': 'الفلبين'},
+    {'code': '+64', 'flag': '🇳🇿', 'name': 'نيوزيلندا'},
+    {'code': '+65', 'flag': '🇸🇬', 'name': 'سنغافورة'},
+    {'code': '+66', 'flag': '🇹🇭', 'name': 'تايلاند'},
+    {'code': '+81', 'flag': '🇯🇵', 'name': 'اليابان'},
+    {'code': '+82', 'flag': '🇰🇷', 'name': 'كوريا الجنوبية'},
+    {'code': '+84', 'flag': '🇻🇳', 'name': 'فيتنام'},
+    
+    // 🌍 أوروبا
+    {'code': '+7', 'flag': '🇷🇺', 'name': 'روسيا'},
+    {'code': '+30', 'flag': '🇬🇷', 'name': 'اليونان'},
+    {'code': '+31', 'flag': '🇳🇱', 'name': 'هولندا'},
+    {'code': '+32', 'flag': '🇧🇪', 'name': 'بلجيكا'},
+    {'code': '+33', 'flag': '🇫🇷', 'name': 'فرنسا'},
+    {'code': '+34', 'flag': '🇪🇸', 'name': 'إسبانيا'},
+    {'code': '+36', 'flag': '🇭🇺', 'name': 'المجر'},
+    {'code': '+39', 'flag': '🇮🇹', 'name': 'إيطاليا'},
+    {'code': '+40', 'flag': '🇷🇴', 'name': 'رومانيا'},
+    {'code': '+41', 'flag': '🇨🇭', 'name': 'سويسرا'},
+    {'code': '+42', 'flag': '🇨🇿', 'name': 'التشيك'},
+    {'code': '+43', 'flag': '🇦🇹', 'name': 'النمسا'},
+    {'code': '+44', 'flag': '🇬🇧', 'name': 'بريطانيا'},
+    {'code': '+45', 'flag': '🇩🇰', 'name': 'الدنمارك'},
+    {'code': '+46', 'flag': '🇸🇪', 'name': 'السويد'},
+    {'code': '+47', 'flag': '🇳🇴', 'name': 'النرويج'},
+    {'code': '+48', 'flag': '🇵🇱', 'name': 'بولندا'},
+    {'code': '+49', 'flag': '🇩🇪', 'name': 'ألمانيا'},
+    {'code': '+350', 'flag': '🇬🇮', 'name': 'جبل طارق'},
+    {'code': '+351', 'flag': '🇵🇹', 'name': 'البرتغال'},
+    {'code': '+352', 'flag': '🇱🇺', 'name': 'لوكسمبورغ'},
+    {'code': '+353', 'flag': '🇮🇪', 'name': 'أيرلندا'},
+    {'code': '+354', 'flag': '🇮🇸', 'name': 'آيسلندا'},
+    {'code': '+355', 'flag': '🇦🇱', 'name': 'ألبانيا'},
+    {'code': '+356', 'flag': '🇲🇹', 'name': 'مالطا'},
+    {'code': '+357', 'flag': '🇨🇾', 'name': 'قبرص'},
+    {'code': '+358', 'flag': '🇫🇮', 'name': 'فنلندا'},
+    {'code': '+359', 'flag': '🇧🇬', 'name': 'بلغاريا'},
+    {'code': '+370', 'flag': '🇱🇹', 'name': 'ليتوانيا'},
+    {'code': '+371', 'flag': '🇱🇻', 'name': 'لاتفيا'},
+    {'code': '+372', 'flag': '🇪🇪', 'name': 'إستونيا'},
+    {'code': '+373', 'flag': '🇲🇩', 'name': 'مولدوفا'},
+    {'code': '+374', 'flag': '🇦🇲', 'name': 'أرمينيا'},
+    {'code': '+375', 'flag': '🇧🇾', 'name': 'بيلاروسيا'},
+    {'code': '+376', 'flag': '🇦🇩', 'name': 'أندورا'},
+    {'code': '+377', 'flag': '🇲🇨', 'name': 'موناكو'},
+    {'code': '+378', 'flag': '🇸🇲', 'name': 'سان مارينو'},
+    {'code': '+379', 'flag': '🇻🇦', 'name': 'الفاتيكان'},
+    {'code': '+380', 'flag': '🇺🇦', 'name': 'أوكرانيا'},
+    {'code': '+381', 'flag': '🇷🇸', 'name': 'صربيا'},
+    {'code': '+382', 'flag': '🇲🇪', 'name': 'الجبل الأسود'},
+    {'code': '+383', 'flag': '🇽🇰', 'name': 'كوسوفو'},
+    {'code': '+385', 'flag': '🇭🇷', 'name': 'كرواتيا'},
+    {'code': '+386', 'flag': '🇸🇮', 'name': 'سلوفينيا'},
+    {'code': '+387', 'flag': '🇧🇦', 'name': 'البوسنة والهرسك'},
+    {'code': '+389', 'flag': '🇲🇰', 'name': 'مقدونيا الشمالية'},
+    {'code': '+420', 'flag': '🇨🇿', 'name': 'التشيك'},
+    {'code': '+421', 'flag': '🇸🇰', 'name': 'سلوفاكيا'},
+    {'code': '+423', 'flag': '🇱🇮', 'name': 'ليختنشتاين'},
+    
+    // 🌍 أمريكا الشمالية والجنوبية
+    {'code': '+1', 'flag': '🇺🇸', 'name': 'الولايات المتحدة'},
+    {'code': '+1', 'flag': '🇨🇦', 'name': 'كندا (نفس الرقم)'},
+    {'code': '+52', 'flag': '🇲🇽', 'name': 'المكسيك'},
+    {'code': '+53', 'flag': '🇨🇺', 'name': 'كوبا'},
+    {'code': '+54', 'flag': '🇦🇷', 'name': 'الأرجنتين'},
+    {'code': '+55', 'flag': '🇧🇷', 'name': 'البرازيل'},
+    {'code': '+56', 'flag': '🇨🇱', 'name': 'تشيلي'},
+    {'code': '+57', 'flag': '🇨🇴', 'name': 'كولومبيا'},
+    {'code': '+58', 'flag': '🇻🇪', 'name': 'فنزويلا'},
+    {'code': '+591', 'flag': '🇧🇴', 'name': 'بوليفيا'},
+    {'code': '+592', 'flag': '🇬🇾', 'name': 'غيانا'},
+    {'code': '+593', 'flag': '🇪🇨', 'name': 'الإكوادور'},
+    {'code': '+594', 'flag': '🇬🇫', 'name': 'غويانا الفرنسية'},
+    {'code': '+595', 'flag': '🇵🇾', 'name': 'باراغواي'},
+    {'code': '+596', 'flag': '🇲🇶', 'name': 'مارتينيك'},
+    {'code': '+597', 'flag': '🇸🇷', 'name': 'سورينام'},
+    {'code': '+598', 'flag': '🇺🇾', 'name': 'أوروغواي'},
+    {'code': '+599', 'flag': '🇧🇶', 'name': 'جزر الكاريبي الهولندية'},
+    {'code': '+500', 'flag': '🇫🇰', 'name': 'جزر فوكلاند'},
+    {'code': '+501', 'flag': '🇧🇿', 'name': 'بليز'},
+    {'code': '+502', 'flag': '🇬🇹', 'name': 'غواتيمالا'},
+    {'code': '+503', 'flag': '🇸🇻', 'name': 'السلفادور'},
+    {'code': '+504', 'flag': '🇭🇳', 'name': 'هندوراس'},
+    {'code': '+505', 'flag': '🇳🇮', 'name': 'نيكاراغوا'},
+    {'code': '+506', 'flag': '🇨🇷', 'name': 'كوستاريكا'},
+    {'code': '+507', 'flag': '🇵🇦', 'name': 'بنما'},
+    {'code': '+508', 'flag': '🇵🇲', 'name': 'سان بيير وميكلون'},
+    {'code': '+509', 'flag': '🇭🇹', 'name': 'هايتي'},
+    {'code': '+51', 'flag': '🇵🇪', 'name': 'بيرو'},
+    {'code': '+52', 'flag': '🇲🇽', 'name': 'المكسيك'},
+    {'code': '+53', 'flag': '🇨🇺', 'name': 'كوبا'},
+    {'code': '+54', 'flag': '🇦🇷', 'name': 'الأرجنتين'},
+    {'code': '+55', 'flag': '🇧🇷', 'name': 'البرازيل'},
+    {'code': '+56', 'flag': '🇨🇱', 'name': 'تشيلي'},
+    {'code': '+57', 'flag': '🇨🇴', 'name': 'كولومبيا'},
+    {'code': '+58', 'flag': '🇻🇪', 'name': 'فنزويلا'},
+    {'code': '+1-868', 'flag': '🇹🇹', 'name': 'ترينيداد وتوباغو'},
+    {'code': '+1-876', 'flag': '🇯🇲', 'name': 'جامايكا'},
+    {'code': '+1-242', 'flag': '🇧🇸', 'name': 'جزر البهاما'},
+    {'code': '+1-246', 'flag': '🇧🇧', 'name': 'باربادوس'},
+    {'code': '+1-264', 'flag': '🇦🇮', 'name': 'أنغويلا'},
+    {'code': '+1-268', 'flag': '🇦🇬', 'name': 'أنتيغوا وباربودا'},
+    {'code': '+1-284', 'flag': '🇻🇬', 'name': 'جزر العذراء البريطانية'},
+    {'code': '+1-340', 'flag': '🇻🇮', 'name': 'جزر العذراء الأمريكية'},
+    {'code': '+1-345', 'flag': '🇰🇾', 'name': 'جزر كايمان'},
+    {'code': '+1-441', 'flag': '🇧🇲', 'name': 'برمودا'},
+    {'code': '+1-473', 'flag': '🇬🇩', 'name': 'غرينادا'},
+    {'code': '+1-649', 'flag': '🇹🇨', 'name': 'جزر توركس وكايكوس'},
+    {'code': '+1-664', 'flag': '🇲🇸', 'name': 'مونتسرات'},
+    {'code': '+1-670', 'flag': '🇲🇵', 'name': 'جزر ماريانا الشمالية'},
+    {'code': '+1-671', 'flag': '🇬🇺', 'name': 'غوام'},
+    {'code': '+1-684', 'flag': '🇦🇸', 'name': 'ساموا الأمريكية'},
+    {'code': '+1-721', 'flag': '🇸🇽', 'name': 'سينت مارتن'},
+    {'code': '+1-767', 'flag': '🇩🇲', 'name': 'دومينيكا'},
+    {'code': '+1-784', 'flag': '🇻🇨', 'name': 'سانت فينسنت والغرينادين'},
+    {'code': '+1-787', 'flag': '🇵🇷', 'name': 'بورتوريكو'},
+    {'code': '+1-809', 'flag': '🇩🇴', 'name': 'جمهورية الدومينيكان'},
+    {'code': '+1-829', 'flag': '🇩🇴', 'name': 'جمهورية الدومينيكان'},
+    {'code': '+1-849', 'flag': '🇩🇴', 'name': 'جمهورية الدومينيكان'},
+    {'code': '+1-869', 'flag': '🇰🇳', 'name': 'سانت كيتس ونيفيس'},
+    {'code': '+1-939', 'flag': '🇵🇷', 'name': 'بورتوريكو'},
+  ];
+
+  // ✅ القائمة المفلترة (البحث)
+  List<Map<String, String>> _filteredCountries = [];
+  TextEditingController _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _filteredCountries = _allCountries;
+    _searchController.addListener(_filterCountries);
+  }
+
+  void _filterCountries() {
+    final query = _searchController.text.toLowerCase();
+    setState(() {
+      _filteredCountries = _allCountries.where((country) {
+        return country['name']!.toLowerCase().contains(query) ||
+            country['code']!.contains(query);
+      }).toList();
+    });
+  }
 
   void _startCooldown([int seconds = 30]) {
     _cooldownTimer?.cancel();
@@ -43,30 +286,18 @@ class _OTPLoginScreenState extends State<OTPLoginScreen> {
     });
   }
 
-  String _formatPhoneNumber(String phone) {
-    String cleaned = phone.trim();
-    cleaned = cleaned.replaceAll(' ', '');
-    cleaned = cleaned.replaceAll('-', '');
-    cleaned = cleaned.replaceAll('(', '');
-    cleaned = cleaned.replaceAll(')', '');
+  String _getFullPhoneNumber() {
+    String localNumber = _phoneController.text.trim();
+    localNumber = localNumber.replaceAll(' ', '');
+    localNumber = localNumber.replaceAll('-', '');
+    localNumber = localNumber.replaceAll('(', '');
+    localNumber = localNumber.replaceAll(')', '');
     
-    if (cleaned.startsWith('0')) {
-      return '+20${cleaned.substring(1)}';
+    while (localNumber.startsWith('0')) {
+      localNumber = localNumber.substring(1);
     }
-    if (cleaned.startsWith('0020')) {
-      return '+20${cleaned.substring(4)}';
-    }
-    if (cleaned.startsWith('+20')) {
-      return cleaned;
-    }
-    if (!cleaned.startsWith('+')) {
-      return '+20$cleaned';
-    }
-    return cleaned;
-  }
-
-  String _formatEmail(String email) {
-    return email.trim().toLowerCase();
+    
+    return '$_selectedCountryCode$localNumber';
   }
 
   void _showSnackbar(String message, {bool isError = false}) {
@@ -81,68 +312,94 @@ class _OTPLoginScreenState extends State<OTPLoginScreen> {
     );
   }
 
-  Future<void> _createUserInFirestore(User user, String identifier, String type) async {
-    print('🔵🔵🔵 دالة _createUserInFirestore اتعملت 🔵🔵🔵');
+  Future<void> _createOrUpdateUserInFirestore(User user, String phoneNumber) async {
+    print('🔵🔵🔵 دالة _createOrUpdateUserInFirestore اتعملت 🔵🔵🔵');
     print('🆔 UID: ${user.uid}');
-    print('$type: $identifier');
+    print('📞 Phone: $phoneNumber');
     
     try {
       final userRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
       final doc = await userRef.get();
       
-      final Map<String, dynamic> userData = {
-        'uid': user.uid,
-        'name': type == 'phone' ? identifier : identifier.split('@').first,
-        'createdAt': FieldValue.serverTimestamp(),
-        'lastSeen': FieldValue.serverTimestamp(),
-        'isActive': true,
-        'avatarUrl': '',
-        'about': 'مرحباً، أنا أستخدم Privoo',
-      };
-      
-      if (type == 'phone') {
-        userData['phoneNumber'] = identifier;
-      } else {
-        userData['email'] = identifier;
-      }
-      
       if (!doc.exists) {
-        await userRef.set(userData);
+        final Map<String, dynamic> newUserData = {
+          'uid': user.uid,
+          'name': phoneNumber,
+          'phoneNumber': phoneNumber,
+          'avatarUrl': '',
+          'about': 'مرحباً، أنا أستخدم Privoo',
+          'isActive': true,
+          'createdAt': FieldValue.serverTimestamp(),
+          'lastSeen': FieldValue.serverTimestamp(),
+        };
+        
+        await userRef.set(newUserData);
         print('✅ تم إنشاء مستخدم جديد في Firestore: ${user.uid}');
       } else {
-        // تحديث بيانات الدخول الجديدة
-        await userRef.update(userData);
-        print('✅ تم تحديث بيانات المستخدم: ${user.uid}');
+        final existingData = doc.data()!;
+        final Map<String, dynamic> updateData = {
+          'lastSeen': FieldValue.serverTimestamp(),
+          'isActive': true,
+        };
+        
+        if (existingData['phoneNumber'] == null || existingData['phoneNumber'].isEmpty) {
+          updateData['phoneNumber'] = phoneNumber;
+        }
+        
+        if (existingData['name'] == null || existingData['name'].isEmpty) {
+          updateData['name'] = phoneNumber;
+        }
+        
+        await userRef.update(updateData);
+        print('✅ تم تحديث وقت التواجد للمستخدم: ${user.uid}');
       }
     } catch (e) {
-      print('❌❌❌ فشل إنشاء المستخدم: $e ❌❌❌');
+      print('❌❌❌ فشل إنشاء أو تحديث المستخدم: $e ❌❌❌');
     }
   }
 
-  // ==================== طرق تسجيل الدخول ====================
-  
-  // ✅ 1. تسجيل الدخول برقم الهاتف (SMS OTP)
-  Future<void> _sendPhoneOTP() async {
-    final rawPhone = _phoneController.text.trim();
-    final phone = _formatPhoneNumber(rawPhone);
+  Future<void> _sendOTP() async {
+    final localNumber = _phoneController.text.trim();
     
-    if (phone.isEmpty) {
+    if (localNumber.isEmpty) {
       _showSnackbar("📵 يرجى إدخال رقم الهاتف.", isError: true);
+      return;
+    }
+    
+    if (localNumber.length < 6) {
+      _showSnackbar("📵 رقم الهاتف يجب أن يكون 6 أرقام على الأقل", isError: true);
       return;
     }
     
     if (_cooldownSeconds > 0) return;
 
+    final fullPhoneNumber = _getFullPhoneNumber();
     setState(() => _isLoading = true);
+    
+    final messenger = ScaffoldMessenger.of(context);
+    final loadingSnack = SnackBar(
+      content: Row(
+        children: [
+          const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+          const SizedBox(width: 12),
+          Expanded(child: Text('جاري إرسال رمز التحقق إلى $fullPhoneNumber...')),
+        ],
+      ),
+      duration: const Duration(seconds: 10),
+      behavior: SnackBarBehavior.floating,
+    );
+    messenger.showSnackBar(loadingSnack);
     
     try {
       await _auth.verifyPhoneNumber(
-        phoneNumber: phone,
+        phoneNumber: fullPhoneNumber,
         timeout: const Duration(seconds: 60),
         verificationCompleted: (PhoneAuthCredential credential) async {
-          final userCredential = await _auth.signInWithCredential(credential);
-          await _createUserInFirestore(userCredential.user!, phone, 'phone');
-          await _checkTermsAndNavigate();
+          try {
+            final userCredential = await _auth.signInWithCredential(credential);
+            await _createOrUpdateUserInFirestore(userCredential.user!, fullPhoneNumber);
+            await _checkTermsAndNavigate();
+          } catch (_) {}
         },
         verificationFailed: (FirebaseAuthException e) {
           _showSnackbar("❌ فشل التحقق: ${e.message}", isError: true);
@@ -153,7 +410,7 @@ class _OTPLoginScreenState extends State<OTPLoginScreen> {
             _codeSent = true;
           });
           _startCooldown(30);
-          _showSnackbar("✅ تم إرسال رمز التحقق إلى $phone");
+          _showSnackbar("✅ تم إرسال رمز التحقق إلى $fullPhoneNumber");
         },
         codeAutoRetrievalTimeout: (verificationId) {
           _verificationId = verificationId;
@@ -162,11 +419,17 @@ class _OTPLoginScreenState extends State<OTPLoginScreen> {
     } catch (e) {
       _showSnackbar("❌ تعذر إرسال الرمز.", isError: true);
     } finally {
+      messenger.clearSnackBars();
       setState(() => _isLoading = false);
     }
   }
 
-  Future<void> _verifyPhoneOTP() async {
+  Future<void> _verifyOTP() async {
+    if (_attempts >= 5) {
+      _showSnackbar("⏳ تم تجاوز الحد. أعد إرسال الرمز بعد قليل.", isError: true);
+      return;
+    }
+    
     if (_verificationId == null) {
       _showSnackbar("⚠️ أرسل رمز تحقق أولاً.", isError: true);
       return;
@@ -185,73 +448,75 @@ class _OTPLoginScreenState extends State<OTPLoginScreen> {
         smsCode: code,
       );
       final userCredential = await _auth.signInWithCredential(credential);
-      final phone = _formatPhoneNumber(_phoneController.text.trim());
-      await _createUserInFirestore(userCredential.user!, phone, 'phone');
+      final fullPhoneNumber = _getFullPhoneNumber();
+      await _createOrUpdateUserInFirestore(userCredential.user!, fullPhoneNumber);
       await _checkTermsAndNavigate();
     } catch (e) {
       setState(() => _attempts += 1);
-      _showSnackbar("❌ رمز غير صحيح.", isError: true);
+      _showSnackbar("❌ رمز غير صحيح. المحاولات المتبقية: ${5 - _attempts}", isError: true);
     } finally {
       setState(() => _isLoading = false);
     }
   }
 
-  // ✅ 2. تسجيل الدخول بالبريد الإلكتروني (Magic Link)
-  Future<void> _sendMagicLink() async {
-    final email = _formatEmail(_emailController.text.trim());
-    
-    if (email.isEmpty || !email.contains('@')) {
-      _showSnackbar("📧 يرجى إدخال بريد إلكتروني صالح.", isError: true);
-      return;
-    }
-
-    setState(() => _isLoading = true);
-    
-    try {
-      await _auth.sendSignInLinkToEmail(
-        email: email,
-        actionCodeSettings: ActionCodeSettings(
-          url: 'https://privoo.page.link/login',
-          handleCodeInApp: true,
-          androidPackageName: 'com.mando.privoo',
-          androidInstallApp: true,
-          androidMinimumVersion: '1',
-          iOSBundleId: 'com.mando.privoo',
-        ),
-      );
-      
-      _showSnackbar("✅ تم إرسال رابط سحري إلى $email!");
-      
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('email_for_signin', email);
-      
-      setState(() {
-        _codeSent = true;
-        _loginMethod = 1;
-      });
-    } catch (e) {
-      _showSnackbar("❌ فشل الإرسال: ${e.toString()}", isError: true);
-    } finally {
-      setState(() => _isLoading = false);
-    }
-  }
-
-  Future<void> _handleMagicLink() async {
-    final prefs = await SharedPreferences.getInstance();
-    final email = prefs.getString('email_for_signin');
-    
-    if (email != null && _auth.isSignInWithEmailLink(_verificationId ?? '')) {
-      try {
-        final userCredential = await _auth.signInWithEmailLink(
-          email: email,
-          emailLink: _verificationId!,
+  void _showCountryPicker() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return SizedBox(
+              height: MediaQuery.of(context).size.height * 0.7,
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: TextField(
+                      controller: _searchController,
+                      autofocus: true,
+                      decoration: InputDecoration(
+                        hintText: 'البحث عن دولة...',
+                        prefixIcon: const Icon(Icons.search),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        filled: true,
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: _filteredCountries.length,
+                      itemBuilder: (context, index) {
+                        final country = _filteredCountries[index];
+                        return ListTile(
+                          leading: Text(country['flag']!, style: const TextStyle(fontSize: 28)),
+                          title: Text(country['name']!),
+                          trailing: Text(country['code']!, 
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                          onTap: () {
+                            setState(() {
+                              _selectedCountryCode = country['code']!;
+                              _selectedCountryFlag = country['flag']!;
+                              _selectedCountryName = country['name']!;
+                            });
+                            Navigator.pop(context);
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
         );
-        await _createUserInFirestore(userCredential.user!, email, 'email');
-        await _checkTermsAndNavigate();
-      } catch (e) {
-        print('❌ فشل التحقق من الرابط: $e');
-      }
-    }
+      },
+    );
   }
 
   Future<void> _checkTermsAndNavigate() async {
@@ -275,49 +540,25 @@ class _OTPLoginScreenState extends State<OTPLoginScreen> {
   }
 
   @override
-  void initState() {
-    super.initState();
-    _handleMagicLink();
-  }
-
-  @override
   void dispose() {
     _phoneController.dispose();
-    _emailController.dispose();
     _otpController.dispose();
+    _searchController.dispose();
     _cooldownTimer?.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final isPhoneMethod = _loginMethod == 0;
     final resendTitle = _cooldownSeconds > 0 
-        ? 'إرسال (${_cooldownSeconds}s)' 
-        : (isPhoneMethod ? 'إرسال رمز التحقق' : 'إرسال رابط سحري');
+        ? 'إرسال الرمز (${_cooldownSeconds}s)' 
+        : 'إرسال رمز التحقق';
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("تسجيل الدخول"),
+        title: const Text("تسجيل الدخول برقم الهاتف"),
         centerTitle: true,
         elevation: 0,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(50),
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _buildMethodButton(0, '📱 رقم الهاتف', Icons.phone),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _buildMethodButton(1, '📧 البريد الإلكتروني', Icons.email),
-                ),
-              ],
-            ),
-          ),
-        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(24),
@@ -332,177 +573,3 @@ class _OTPLoginScreenState extends State<OTPLoginScreen> {
                 color: AppTheme.privooDeepPurple,
                 boxShadow: [AppTheme.mainShadow(AppTheme.privooDeepPurple)],
               ),
-              child: Center(
-                child: Icon(
-                  _loginMethod == 0 ? Icons.phone_android : Icons.email,
-                  size: 50,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Privoo',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.privooDeepPurple,
-              ),
-            ),
-            const SizedBox(height: 40),
-            
-            // الحقل حسب الطريقة المختارة
-            if (_loginMethod == 0 && !_codeSent)
-              TextField(
-                controller: _phoneController,
-                decoration: InputDecoration(
-                  labelText: "رقم الهاتف",
-                  hintText: "مثال: 01234567890",
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  prefixIcon: const Icon(Icons.phone),
-                ),
-                keyboardType: TextInputType.phone,
-              ),
-              
-            if (_loginMethod == 1 && !_codeSent)
-              TextField(
-                controller: _emailController,
-                decoration: InputDecoration(
-                  labelText: "البريد الإلكتروني",
-                  hintText: "example@domain.com",
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  prefixIcon: const Icon(Icons.email),
-                ),
-                keyboardType: TextInputType.emailAddress,
-              ),
-              
-            if (_codeSent)
-              TextField(
-                controller: _otpController,
-                decoration: InputDecoration(
-                  labelText: _loginMethod == 0 ? "رمز التحقق" : "رمز التحقق (اختياري)",
-                  hintText: "أدخل الرمز المكون من 6 أرقام",
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  prefixIcon: const Icon(Icons.lock),
-                ),
-                keyboardType: TextInputType.number,
-                maxLength: 6,
-              ),
-              
-            const SizedBox(height: 20),
-            
-            _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : ElevatedButton(
-                    onPressed: () {
-                      if (!_codeSent) {
-                        if (_loginMethod == 0) {
-                          _sendPhoneOTP();
-                        } else {
-                          _sendMagicLink();
-                        }
-                      } else {
-                        if (_loginMethod == 0) {
-                          _verifyPhoneOTP();
-                        } else {
-                          // للبريد الإلكتروني، الرابط السحري لا يحتاج OTP
-                          _showSnackbar("⚠️ اضغط على الرابط المرسل إلى بريدك");
-                        }
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      minimumSize: const Size(double.infinity, 55),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                    ),
-                    child: Text(
-                      _codeSent ? "تحقق" : resendTitle,
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                  ),
-                  
-            if (_codeSent && _loginMethod == 0)
-              TextButton(
-                onPressed: () {
-                  setState(() {
-                    _codeSent = false;
-                    _otpController.clear();
-                    _verificationId = null;
-                    _attempts = 0;
-                  });
-                },
-                child: const Text("تغيير رقم الهاتف"),
-              ),
-              
-            if (_loginMethod == 1 && !_codeSent)
-              Padding(
-                padding: const EdgeInsets.only(top: 20),
-                child: Text(
-                  'سيتم إرسال رابط سحري إلى بريدك الإلكتروني',
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-  
-  Widget _buildMethodButton(int method, String label, IconData icon) {
-    final isSelected = _loginMethod == method;
-    return GestureDetector(
-      onTap: () {
-        if (!_isLoading) {
-          setState(() {
-            _loginMethod = method;
-            _codeSent = false;
-            _otpController.clear();
-            _verificationId = null;
-            _attempts = 0;
-          });
-        }
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: isSelected 
-              ? AppTheme.privooLightPurple 
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(30),
-          border: Border.all(
-            color: isSelected 
-                ? AppTheme.privooLightPurple 
-                : Colors.grey.shade400,
-            width: 1,
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon, 
-              size: 18, 
-              color: isSelected ? Colors.white : Colors.grey.shade600,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(
-                color: isSelected ? Colors.white : Colors.grey.shade600,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
