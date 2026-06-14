@@ -5,6 +5,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:logger/logger.dart';
 import 'services/firebase/notification_service.dart';
 import 'config/app_theme.dart';
@@ -95,8 +96,23 @@ class _PrivooAppState extends ConsumerState<PrivooApp> {
       final user = FirebaseAuth.instance.currentUser;
       
       if (user != null) {
-        _nextRoute = '/home';
-        _logger.i("✅ المستخدم مسجل: ${user.uid} - التوجيه إلى HomeScreen");
+        _logger.i("🔍 المستخدم مسجل تليفونياً: ${user.uid} - جاري التحقق من وجود البروفايل...");
+        
+        // ✅ فحص ذكي: إجبار القراءة من السيرفر مباشرة للتأكد من وجود المستند
+        final userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get(const GetOptions(source: Source.server));
+
+        if (userDoc.exists && userDoc.data()?['name'] != null && userDoc.data()?['name'].toString().trim().isNotEmpty) {
+          // الحساب مكتمل وله اسم في قاعدة البيانات
+          _nextRoute = '/home';
+          _logger.i("✅ البروفايل موجود ومكتمل - التوجيه إلى HomeScreen");
+        } else {
+          // الحساب مسجل رقم لكن مسحت المستند بتاعه أو لسه مكتبش اسمه
+          _nextRoute = '/profile';
+          _logger.w("⚠️ لا يوجد اسم أو بروفايل في السيرفر - التوجيه إلى ProfileSetupScreen لإعداد الحساب");
+        }
       } else {
         _nextRoute = '/login';
         _logger.i("👤 المستخدم غير مسجل - التوجيه إلى شاشة تسجيل الدخول");
@@ -133,13 +149,11 @@ class _PrivooAppState extends ConsumerState<PrivooApp> {
   Future<bool> _onWillPop() async {
     final navigator = Navigator.of(context);
     
-    // ✅ إذا كان هناك شاشات سابقة، ارجع للشاشة السابقة
     if (navigator.canPop()) {
       navigator.pop();
       return false;
     }
     
-    // ✅ إذا كانت هذه هي الشاشة الرئيسية، اسأل قبل الخروج
     final shouldExit = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
