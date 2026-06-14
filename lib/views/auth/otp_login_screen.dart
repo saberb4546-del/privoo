@@ -573,3 +573,129 @@ class _OTPLoginScreenState extends State<OTPLoginScreen> {
                 color: AppTheme.privooDeepPurple,
                 boxShadow: [AppTheme.mainShadow(AppTheme.privooDeepPurple)],
               ),
+              child: const Center(
+                child: Icon(Icons.phone_android, size: 50, color: Colors.white),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Privoo',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.privooDeepPurple,
+              ),
+            ),
+            const SizedBox(height: 40),
+            
+            // ✅ حقل رقم الهاتف مع اختيار رمز الدولة
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ✅ زر اختيار رمز الدولة
+                GestureDetector(
+                  onTap: _showCountryPicker,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey.shade400),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Row(
+                      children: [
+                        Text(_selectedCountryFlag, style: const TextStyle(fontSize: 24)),
+                        const SizedBox(width: 4),
+                        Text(_selectedCountryCode, style: const TextStyle(fontSize: 14)),
+                        const Icon(Icons.arrow_drop_down, size: 20),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                // ✅ حقل إدخال رقم الهاتف
+                Expanded(
+                  child: TextField(
+                    controller: _phoneController,
+                    decoration: InputDecoration(
+                      labelText: "رقم الهاتف",
+                      hintText: "مثال: 123456789",
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      prefixIcon: const Icon(Icons.phone),
+                    ),
+                    keyboardType: TextInputType.phone,
+                    textInputAction: TextInputAction.done,
+                    onSubmitted: (_) => _sendOTP(),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '$_selectedCountryName • ${_selectedCountryFlag} $_selectedCountryCode',
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+            ),
+            const SizedBox(height: 16),
+            
+            if (_codeSent)
+              TextField(
+                controller: _otpController,
+                decoration: InputDecoration(
+                  labelText: "رمز التحقق",
+                  hintText: "أدخل الرقم المكون من 6 أرقام",
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  prefixIcon: const Icon(Icons.lock),
+                ),
+                keyboardType: TextInputType.number,
+                maxLength: 6,
+                textInputAction: TextInputAction.done,
+                onSubmitted: (_) => _verifyOTP(),
+              ),
+              
+            const SizedBox(height: 20),
+            
+            _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : ElevatedButton(
+                    onPressed: _codeSent ? _verifyOTP : _sendOTP,
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: const Size(double.infinity, 55),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                    ),
+                    child: Text(
+                      _codeSent ? "تحقق" : resendTitle,
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                  ),
+                  
+            if (_codeSent)
+              TextButton(
+                onPressed: () {
+                  setState(() {
+                    _codeSent = false;
+                    _otpController.clear();
+                    _verificationId = null;
+                    _attempts = 0;
+                  });
+                },
+                child: const Text("تغيير رقم الهاتف"),
+              ),
+              
+            const SizedBox(height: 20),
+            
+            Text(
+              'سيتم إرسال رمز تحقق عن طريق رسالة نصية إلى رقم هاتفك',
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
