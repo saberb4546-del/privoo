@@ -49,28 +49,30 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
     }
 
     try {
+      // ✅ الحقول موحدة مع Firestore
+      // uid = user.uid (Document ID)
+      // phoneNumber (وليس phone)
+      // isActive (وليس isOnline)
       await _db.collection('users').doc(user.uid).set({
-        'id': user.uid,
         'uid': user.uid,
         'name': name,
-        'phoneNumber': user.phoneNumber,  // ✅ تم التعديل من 'phone' إلى 'phoneNumber'
+        'phoneNumber': user.phoneNumber ?? '',
         'avatarUrl': '',
-        'isOnline': true,
-        'about': 'مرحباً، أنا أستخدم Privoo',
+        'isActive': true,
         'createdAt': FieldValue.serverTimestamp(),
         'lastSeen': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
 
-      logger.i("✅ تم حفظ ملف المستخدم: ${user.uid}");
+      logger.i("✅ تم حفظ ملف المستخدم بنجاح: ${user.uid}");
 
       if (mounted) {
         setState(() => _isLoading = false);
-        await Future.delayed(const Duration(milliseconds: 100));
+        await Future.delayed(const Duration(milliseconds: 500));
         Navigator.pushReplacementNamed(context, '/home');
       }
     } catch (e) {
-      logger.e("❌ فشل حفظ ملف المستخدم: $e");
-      _showSnackbar("فشل حفظ الملف الشخصي. يرجى المحاولة مرة أخرى.", isError: true);
+      logger.e("❌ فشل حفظ ملف المستخدم في Firestore: $e");
+      _showSnackbar("فشل حفظ الملف الشخصي: ${e.toString()}", isError: true);
       if (mounted) {
         setState(() => _isLoading = false);
       }
@@ -99,7 +101,6 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // شعار Privoo
                 Container(
                   width: 100,
                   height: 100,
@@ -124,7 +125,6 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                 ),
                 const SizedBox(height: 40),
                 
-                // Avatar placeholder
                 Center(
                   child: Container(
                     decoration: BoxDecoration(
